@@ -10,7 +10,7 @@ public:
     explicit Entity(Rectangle newRect);
     Rectangle& getRect();
 private:
-    Rectangle& rect;
+    Rectangle rect;
 };
 
 std::ostream& operator<<(std::ostream& os, Entity* entity);
