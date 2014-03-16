@@ -8,6 +8,7 @@
 class QuadTree {
     public:
         QuadTree(int newLevel, Rectangle rect);
+        ~QuadTree();
         void clear();
         void insert(Entity* entity);
         std::vector<Entity*> retrievePossibleCollisions(Entity* entity);

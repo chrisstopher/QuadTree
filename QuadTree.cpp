@@ -67,6 +67,10 @@ QuadTree::QuadTree(int newLevel, Rectangle rect)
          : level(newLevel), boundingBox(rect) {
 }
 
+QuadTree::~QuadTree() {
+    clear();
+}
+
 void QuadTree::clear() {
     entities.clear();
     for (auto i : nodes) {
