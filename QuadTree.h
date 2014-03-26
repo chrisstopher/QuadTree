@@ -4,17 +4,20 @@
 #include "Entity.h"
 #include "Rectangle.h"
 #include <vector>
+#include <memory>
 
 class QuadTree {
     public:
         QuadTree(int newLevel, Rectangle rect);
         ~QuadTree();
+        QuadTree(const QuadTree& qTree) = delete;               //TO DO
+        QuadTree(QuadTree&& qTree) = delete;                    //TO DO
+        QuadTree& operator=(const QuadTree& qTree) = delete;    //TO DO
+        QuadTree& operator=(QuadTree&& qTree) = delete;         //TO DO
         void clear();
-        void insert(Entity* entity);
-        std::vector<Entity*> retrievePossibleCollisions(Entity* entity);
-        void preOrderTraversal();
-        void postOrderTraversal();
-        void levelOrderTraversal();
+        void insert(const std::shared_ptr<Entity>& entity);
+        std::vector<std::weak_ptr<Entity>> retrievePossibleCollisions(std::shared_ptr<Entity>& entity);
+        void preOrderTraversal();//for testing
     private:
         int level;
         enum {
@@ -27,16 +30,15 @@ class QuadTree {
             MAX_LEVELS = 5,
             MAX_ENTITIES = 8
         };
-        std::vector<QuadTree*> nodes;
-        std::vector<Entity*> entities;
+        std::vector<std::shared_ptr<QuadTree>> nodes;
+        std::vector<std::weak_ptr<Entity>> entities;
         Rectangle boundingBox;
-
+        std::vector<std::weak_ptr<Entity>>& retrieve(std::vector<std::weak_ptr<Entity>>& entities,
+                                                     const std::weak_ptr<Entity>& entity);
         bool hasChildren();
         void split();
         int getIndex(Rectangle& rect);
-
-        std::vector<Entity*>& retrieve(std::vector<Entity*>& entities,
-                                       Entity* entity);
 };
+
 
 #endif // QUADTREE_H

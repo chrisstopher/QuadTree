@@ -1,68 +1,5 @@
 #include "QuadTree.h"
 
-//for level order traversal only
-#include <queue>
-
-/*
- * For debugging
- * Visit the one you are currently on and then visit its children
- * Uses tabs to show which level you are on
- */
-void QuadTree::preOrderTraversal() {
-    for (int i = 0; i < level; i++) {
-        std::cout << "\t";
-    }
-    std::cout << "Entity count: " << entities.size() << "\n";
-    for (int i = 0; i < level; i++) {
-        std::cout << "\t";
-    }
-    std::cout << "Bounds: " << boundingBox << "\n";
-    for (auto& i : nodes) {
-        i->preOrderTraversal();
-    }
-}
-
-/*
- * Not really helpful in debugging but it shows how postorder traversal works
- * traverse all the nodes down as far as possible
- * visit it
- */
-void QuadTree::postOrderTraversal() {
-    for (auto& i : nodes) {
-        i->postOrderTraversal();
-    }
-    for (int i = 0; i < level; i++) {
-        std::cout << "\t";
-    }
-    std::cout << "Entity count: " << entities.size() << "\n";
-}
-
-/*
- * For debugging
- * Create a queue of QuadTree*
- * push the one you are in onto the queue
- * while there is something in the queue
- *   get the first one off the queue
- *   visit it
- *   push the children of it onto the queue
- */
-void QuadTree::levelOrderTraversal() {
-    std::queue<QuadTree*> levelOrder;
-    levelOrder.push(this);
-    QuadTree* current = nullptr;
-    while (!levelOrder.empty()) {
-        current = levelOrder.front();
-        levelOrder.pop();
-        for (int i = 0; i < current->level; i++) {
-            std::cout << "\t";
-        }
-        std::cout << "Entity count: " << current->entities.size() << "\n";
-        for (auto& i : current->nodes) {
-            levelOrder.push(i);
-        }
-    }
-}
-
 QuadTree::QuadTree(int newLevel, Rectangle rect)
          : level(newLevel), boundingBox(rect) {
 }
@@ -71,17 +8,32 @@ QuadTree::~QuadTree() {
     clear();
 }
 
+/*
+ * clear the entities in the current quadtree
+ * loop through the children
+ *   clear them
+ * clear the children
+ */
 void QuadTree::clear() {
     entities.clear();
-    for (auto i : nodes) {
+    for (auto& i : nodes) {
         i->clear();
-        delete i;
-        i = nullptr;
     }
     nodes.clear();
 }
 
-void QuadTree::insert(Entity* entity) {
+/*
+ * if this quadtree has children
+ *   get the quadrant
+ *   insert it in the correct quadtree
+ * put the entity into the list
+ * if there is to many entities and current level is less than the max level
+ *   if this quadtree does not have children
+ *     split into 4 different quadrants
+ *   loop through the entities and insert them into the correct quadtree
+ *
+ */
+void QuadTree::insert(const std::shared_ptr<Entity>& entity) {
     if (hasChildren()) {
         int index = getIndex(entity->getRect());
         if (index != NO_QUADRANT) {
@@ -89,19 +41,19 @@ void QuadTree::insert(Entity* entity) {
             return;
         }
     }
-    entities.push_back(entity);
+    entities.push_back(std::weak_ptr<Entity>(entity));
     if (entities.size() > MAX_ENTITIES && level < MAX_LEVELS) {
         if (!hasChildren()) {
             split();
         }
-        unsigned i = 0;
         int index;
-        while (i < entities.size()) {
-            index = getIndex(entities.at(i)->getRect());
-            if (index != -1) {
-                Entity* currentEntity = entities.at(i);
+        std::weak_ptr<Entity> currentEntity;
+        for (unsigned i = 0; i < entities.size(); ) {
+            index = getIndex(entities.at(i).lock()->getRect());
+            if (index != NO_QUADRANT) {
+                currentEntity = entities.at(i);
                 entities.erase(entities.begin() + i);
-                nodes[index]->insert(currentEntity);
+                nodes[index]->insert(currentEntity.lock());
             } else {
                 i++;
             }
@@ -112,9 +64,9 @@ void QuadTree::insert(Entity* entity) {
 /*
  * Sets up for retrieving the possible collisions
  */
-std::vector<Entity*> QuadTree::retrievePossibleCollisions(Entity* entity) {
-    std::vector<Entity*> possibleCollisions;
-    return retrieve(possibleCollisions, entity);
+std::vector<std::weak_ptr<Entity>> QuadTree::retrievePossibleCollisions(std::shared_ptr<Entity>& entity) {
+    std::vector<std::weak_ptr<Entity>> possibleCollisions;
+    return retrieve(possibleCollisions, std::weak_ptr<Entity>(entity));
 }
 
 /*
@@ -124,9 +76,9 @@ std::vector<Entity*> QuadTree::retrievePossibleCollisions(Entity* entity) {
  * else
  *   populate the returning list and return it
  */
-std::vector<Entity*>& QuadTree::retrieve(std::vector<Entity*>& returnEntities,
-                                         Entity* entity) {
-    int index = getIndex(entity->getRect());
+std::vector<std::weak_ptr<Entity>>& QuadTree::retrieve(std::vector<std::weak_ptr<Entity>>& returnEntities,
+                                                       const std::weak_ptr<Entity>& entity) {
+    int index = getIndex(entity.lock()->getRect());
     if (index != NO_QUADRANT && hasChildren()) {
         nodes[index]->retrieve(returnEntities, entity);
     }
@@ -146,14 +98,26 @@ bool QuadTree::hasChildren() {
  *    III | IV
  *
  * Splits into 4 quadrants with half the size
+ * level = 0
+ * rect: x = 0, y = 0, width = 600, height = 600
+ * splits into
+ * quadrant I level = 1
+ * quadrant I rect: x = 300, y = 0, width = 300, height = 300
+ * quadrant II level = 1
+ * quadrant II rect: x = 0, y = 0, width = 300, height = 300
+ * quadrant III level = 1
+ * quadrant III rect: x = 0, y = 300, width = 300, height = 300
+ * quadrant IV level = 1
+ * quadrant IV rect: x = 300, y = 300, width = 300, height = 300
+ * and so on
  */
 void QuadTree::split() {
     Vec2f subSize = {boundingBox.getWidth() / 2, boundingBox.getHeight() / 2};
     Vec2f position = boundingBox.getPosition();
-    nodes.push_back(new QuadTree(level+1, Rectangle(position.x + subSize.x, position.y, subSize)));
-    nodes.push_back(new QuadTree(level+1, Rectangle(position, subSize)));
-    nodes.push_back(new QuadTree(level+1, Rectangle(position.x, position.y + subSize.y, subSize)));
-    nodes.push_back(new QuadTree(level+1, Rectangle(position.x + subSize.x, position.y + subSize.y, subSize)));
+    nodes.push_back(std::shared_ptr<QuadTree>(new QuadTree(level+1, {position.x + subSize.x, position.y, subSize})));
+    nodes.push_back(std::shared_ptr<QuadTree>(new QuadTree(level+1, {position, subSize})));
+    nodes.push_back(std::shared_ptr<QuadTree>(new QuadTree(level+1, {position.x, position.y + subSize.y, subSize})));
+    nodes.push_back(std::shared_ptr<QuadTree>(new QuadTree(level+1, {position.x + subSize.x, position.y + subSize.y, subSize})));
 }
 
 /*
@@ -185,4 +149,23 @@ int QuadTree::getIndex(Rectangle& rect) {
         }
     }
     return index;
+}
+
+/*
+ * For debugging
+ * Visit the one you are currently on and then visit its children
+ * Uses tabs to show which level you are on
+ */
+void QuadTree::preOrderTraversal() {
+    for (int i = 0; i < level; i++) {
+        std::cout << "\t";
+    }
+    std::cout << "Entity count: " << entities.size() << "\n";
+        for (int i = 0; i < level; i++) {
+    std::cout << "\t";
+    }
+    std::cout << "Bounds: " << boundingBox << "\n";
+    for (auto& i : nodes) {
+        i->preOrderTraversal();
+    }
 }
