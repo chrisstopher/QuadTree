@@ -23,11 +23,13 @@ class Rectangle {
         float area();
         bool collided(Rectangle& rectangle);
         bool isFullyInside(Rectangle rectangle);
+
+        friend std::ostream& operator<<(std::ostream& os, const Rectangle& rectangle);
     protected:
         Vec2f position, size;
 };
 
-std::ostream& operator<<(std::ostream& os, Rectangle& rectangle);
+
 
 #endif // RECTANGLE_H
 

@@ -36,22 +36,22 @@ int main(int argc, char* argv[]) {
     entities.push_back(std::shared_ptr<Entity>(new Entity({325 + 50, 325 + 50, 32, 32})));
 
     for (auto& i : entities) {
-        std::cout << i << "\n";
+        std::cout << *i << "\n";
         qTree.insert(i);
     }
     for (auto& i : entities) {
         auto possibleCollisions = qTree.retrievePossibleCollisions(i);
-        std::cout << "\nThere are " << possibleCollisions.size() << " possible collisions for " << i << "\n";
+        std::cout << "\nThere are " << possibleCollisions.size() << " possible collisions for " << *i << "\n";
         for (auto& j : possibleCollisions) {
             auto possibleCollider = j.lock();
             if (i == possibleCollider) {//if they are the same entity then do not test anything
-                std::cout << "\t" << i << " == " << possibleCollider << " are the same.\n";
+                std::cout << "\t" << *i << " == " << *possibleCollider << " are the same.\n";
                 continue;
             }
             if (i->getRect().collided(possibleCollider->getRect())) {
-                std::cout << "\t" << i << " collided with " << possibleCollider << "\n";
+                std::cout << "\t" << *i << " collided with " << *possibleCollider << "\n";
             } else {
-                std::cout << "\t" << possibleCollider << "\n";
+                std::cout << "\t" << *possibleCollider << "\n";
             }
         }
     }

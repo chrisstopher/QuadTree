@@ -9,10 +9,11 @@ class Entity
 public:
     explicit Entity(Rectangle newRect);
     Rectangle& getRect();
+    friend std::ostream& operator<<(std::ostream& os, const Entity& entity);
 private:
     Rectangle rect;
 };
 
-std::ostream& operator<<(std::ostream& os, Entity* entity);
+
 
 #endif // ENTITY_H

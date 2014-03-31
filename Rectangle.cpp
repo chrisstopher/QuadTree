@@ -64,9 +64,9 @@ bool Rectangle::isFullyInside(Rectangle rectangle) {
             (rectangle.getPosition().y + rectangle.getHeight()) >= (getPosition().y + getHeight());
 }
 
-std::ostream& operator<<(std::ostream& os, Rectangle& rectangle) {
-    os << rectangle.getPosition().x << ", "
-       << rectangle.getPosition().y << " "
+std::ostream& operator<<(std::ostream& os, const Rectangle& rectangle) {
+    os << rectangle.position.x << ", "
+       << rectangle.position.y << " "
        << rectangle.getWidth() << ", "
        << rectangle.getHeight();
     return os;
