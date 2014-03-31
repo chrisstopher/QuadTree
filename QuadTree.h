@@ -17,7 +17,8 @@ class QuadTree {
         void clear();
         void insert(const std::shared_ptr<Entity>& entity);
         std::vector<std::weak_ptr<Entity>> retrievePossibleCollisions(std::shared_ptr<Entity>& entity);
-        void preOrderTraversal();//for testing
+        //For testing only
+        void preOrderTraversal();
     private:
         int level;
         enum {
@@ -26,7 +27,7 @@ class QuadTree {
             QUADRANT_2,
             QUADRANT_3,
             QUADRANT_4,
-            //MAX_NODES = 4,
+            //Easily changeable max number of levels and entities per quadrant
             MAX_LEVELS = 5,
             MAX_ENTITIES = 8
         };

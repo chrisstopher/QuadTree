@@ -153,7 +153,7 @@ int QuadTree::getIndex(Rectangle& rect) {
 
 /*
  * For debugging
- * Visit the one you are currently on and then visit its children
+ * Visit the node first and then visit its children
  * Uses tabs to show which level you are on
  */
 void QuadTree::preOrderTraversal() {
